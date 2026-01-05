@@ -23,12 +23,25 @@ Deze HACS integratie maakt het mogelijk om een SolarEdge MeterProxy te gebruiken
 
 ### Via HACS (Aanbevolen)
 
-1. Voeg deze repository toe aan HACS
-2. Zoek naar "SolarEdge MeterProxy" 
-3. Installeer de integratie
-4. Herstart Home Assistant
-5. Ga naar Instellingen > Apparaten & Services > Integraties toevoegen
-6. Zoek naar "SolarEdge MeterProxy" en configureer
+1. **Voeg custom repository toe aan HACS:**
+   - Ga naar HACS in Home Assistant
+   - Klik op de drie puntjes (⋮) rechtsboven
+   - Selecteer "Custom repositories"
+   - Voeg deze URL toe: `https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy`
+   - Selecteer categorie: "Integration"
+   - Klik "Add"
+
+2. **Installeer de integratie:**
+   - Ga naar HACS > Integrations
+   - Klik op "SolarEdge MeterProxy"
+   - Klik "Download"
+   - Herstart Home Assistant
+
+3. **Configureer de integratie:**
+   - Ga naar Instellingen > Apparaten & Services
+   - Klik "Integratie toevoegen"
+   - Zoek naar "SolarEdge MeterProxy"
+   - Volg de configuratie stappen
 
 ### Handmatige Installatie
 
