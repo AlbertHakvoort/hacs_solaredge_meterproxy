@@ -2,17 +2,24 @@
   "config_flow": {
     "step": {
       "user": {
-        "title": "SolarEdge MeterProxy",
+        "title": "SolarEdge MeterProxy - P1 Integration",
+        "description": "Configure virtual meter using your P1 smart meter data",
         "data": {
-          "server_ip": "Server IP",
-          "server_port": "Server Port", 
+          "server_ip": "Modbus Server IP (for SolarEdge)",
+          "server_port": "Modbus Server Port",
           "protocol": "Protocol",
-          "meter_type": "Meter Type",
-          "meter_host": "Meter IP",
-          "meter_port": "Meter Port",
-          "meter_address": "Meter Address",
-          "meter_modbus_address": "Modbus Address",
-          "refresh_rate": "Refresh Rate"
+          "p1_power_entity": "P1 Total Power Entity",
+          "p1_voltage_l1_entity": "P1 Voltage L1 Entity",
+          "p1_voltage_l2_entity": "P1 Voltage L2 Entity",
+          "p1_voltage_l3_entity": "P1 Voltage L3 Entity",
+          "p1_current_l1_entity": "P1 Current L1 Entity",
+          "p1_current_l2_entity": "P1 Current L2 Entity",
+          "p1_current_l3_entity": "P1 Current L3 Entity",
+          "p1_power_l1_entity": "P1 Power L1 Entity",
+          "p1_power_l2_entity": "P1 Power L2 Entity",
+          "p1_power_l3_entity": "P1 Power L3 Entity",
+          "meter_modbus_address": "Virtual Meter Modbus Address",
+          "refresh_rate": "Refresh Rate (seconds)"
         }
       }
     },

@@ -1,104 +1,133 @@
-# SolarEdge MeterProxy voor Home Assistant
+# SolarEdge MeterProxy - P1 Smart Meter Integration
 
-Deze HACS integratie maakt het mogelijk om een SolarEdge MeterProxy te gebruiken binnen Home Assistant. Hiermee kun je onondersteunde kWh meters gebruiken met je SolarEdge omvormer door ze te laten fungeren als ondersteunde WattNode meters.
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/AlbertHakvoort/hacs_solaredge_meterproxy)](https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy/releases)
+[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 
-## Functies
+Een Home Assistant integratie die je P1 slimme meter omzet naar een virtuele Modbus meter die SolarEdge inverters kunnen lezen.
 
-- **Modbus Proxy Server**: Simuleert een WattNode meter voor je SolarEdge inverter
-- **Meerdere meter ondersteuning**: Ondersteunt verschillende typen meters zoals SDM120, SDM230, SDM630 en InfluxDB
-- **Real-time monitoring**: Leest en proxy't meter data in real-time naar je SolarEdge systeem
-- **Home Assistant integratie**: Toont meter data als sensoren in Home Assistant
-- **Configureerbaar**: Volledig configureerbaar via Home Assistant UI
+## Wat doet deze integratie?
 
-## Ondersteunde Meters
+Deze integratie leest de gegevens van je bestaande **P1 slimme meter** in Home Assistant en presenteert deze als een **virtuele WattNode meter** via Modbus TCP. Hierdoor kan je SolarEdge inverter verbinding maken met je "gecertificeerde meter" terwijl je gewoon je bestaande P1 meter gebruikt.
 
-- Eastron SDM120M
-- Eastron SDM230M  
-- Eastron SDM630M
-- InfluxDB (via HTTP API)
-- MQTT (voor P1 meters)
-- Generieke Modbus meters
+### Het proces:
+1. **P1 data lezen**: Leest power, voltage en current gegevens van je P1 meter entities
+2. **Modbus server**: Draait een Modbus TCP server op je Home Assistant 
+3. **WattNode emulatie**: Presenteert P1 data als WattNode meter registers
+4. **SolarEdge verbinding**: SolarEdge inverter verbindt met de virtuele meter
 
-## Installatie
+## Vereisten
 
-### Via HACS (Aanbevolen)
+- Home Assistant met werkende P1 meter integratie (bijv. DSMR, P1 Monitor, etc.)
+- SolarEdge inverter met Ethernet verbinding
+- Netwerk toegang tussen SolarEdge inverter en Home Assistant
 
-1. **Voeg custom repository toe aan HACS:**
-   - Ga naar HACS in Home Assistant
-   - Klik op de drie puntjes (⋮) rechtsboven
-   - Selecteer "Custom repositories"
-   - Voeg deze URL toe: `https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy`
-   - Selecteer categorie: "Integration"
-   - Klik "Add"
+## Installatie via HACS
 
-2. **Installeer de integratie:**
-   - Ga naar HACS > Integrations
-   - Klik op "SolarEdge MeterProxy"
-   - Klik "Download"
-   - Herstart Home Assistant
+### Stap 1: Repository toevoegen
+1. Open HACS in Home Assistant
+2. Klik op de drie puntjes (⋮) rechtsboven
+3. Selecteer "Custom repositories"
+4. Voeg toe:
+   - **Repository**: `https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy`
+   - **Type**: Integration
+5. Klik "Add"
 
-3. **Configureer de integratie:**
-   - Ga naar Instellingen > Apparaten & Services
-   - Klik "Integratie toevoegen"
-   - Zoek naar "SolarEdge MeterProxy"
-   - Volg de configuratie stappen
-
-### Handmatige Installatie
-
-1. Download de laatste release
-2. Kopieer de `custom_components/solaredge_meterproxy` map naar je Home Assistant `custom_components` directory
+### Stap 2: Integratie installeren
+1. Zoek naar "SolarEdge MeterProxy" in HACS
+2. Klik "Download"
 3. Herstart Home Assistant
+4. Ga naar Settings → Devices & Services → Add Integration
+5. Zoek "SolarEdge MeterProxy"
 
 ## Configuratie
 
-De integratie ondersteunt configuratie via de Home Assistant UI. Je kunt het volgende instellen:
+### P1 Meter Entities
+Configureer de volgende P1 meter entities (optioneel - laat leeg wat je niet hebt):
 
-### Server Instellingen
-- **IP Adres**: Het IP adres waarop de Modbus server luistert (standaard: 0.0.0.0)
-- **Poort**: De Modbus TCP poort (standaard: 5502)
-- **Protocol**: Kies tussen Modbus RTU of TCP
-- **Log Level**: Debug niveau voor troubleshooting
+**Verplicht:**
+- **P1 Total Power Entity**: Totaal vermogen (bijv. `sensor.power_consumed`)
 
-### Meter Configuratie
-- **Meter Type**: Selecteer het type meter (SDM120, SDM230, InfluxDB, etc.)
-- **Modbus Adres**: Het Modbus adres dat de SolarEdge inverter gebruikt
-- **Refresh Rate**: Hoe vaak de meter wordt uitgelezen (in seconden)
-- **Meter specifieke instellingen**: Afhankelijk van het meter type
+**Optioneel per fase:**
+- **P1 Voltage L1/L2/L3 Entity**: Spanning per fase
+- **P1 Current L1/L2/L3 Entity**: Stroom per fase  
+- **P1 Power L1/L2/L3 Entity**: Vermogen per fase
 
-## SolarEdge Inverter Setup
+**Modbus instellingen:**
+- **Server IP**: `0.0.0.0` (alle interfaces)
+- **Server Port**: `5502` (standaard Modbus TCP poort)
+- **Protocol**: `tcp`
+- **Virtual Meter Address**: `2` (Modbus slave address)
 
-1. Open de SetApp applicatie
-2. Ga naar de Modbus instellingen van je inverter
-3. Stel RS485-1 in als "SunSpec (Non-SE Logger)"
-4. Stel Device ID in op 1
-5. Voeg een nieuwe meter toe:
-   - Protocol: "Modbus (Multi-Device)"
-   - Meter Function: Afhankelijk van je gebruik (Production/Consumption)
-   - Meter Protocol: "SolarEdge" 
-   - Device ID: 2 (of een ander ongebruikt ID)
-   - CT Rating en Grid Topology: Volgens je situatie
+## SolarEdge Configuratie
+
+### Stap 1: Zoek je Home Assistant IP
+Noteer het IP-adres van je Home Assistant (bijv. `192.168.1.100`)
+
+### Stap 2: Configureer SolarEdge
+1. Login op je SolarEdge inverter webinterface
+2. Ga naar **Communication** → **Modbus**
+3. Configureer:
+   - **Protocol**: `Modbus TCP`
+   - **IP Address**: `[Home Assistant IP]` (bijv. `192.168.1.100`)
+   - **Port**: `5502`
+   - **Device ID**: `2`
+   - **Meter Type**: `WattNode` of `Generic`
+
+### Stap 3: Activeer meter
+1. Ga naar **Communication** → **RS485-2**
+2. Selecteer **External Meter**
+3. Sla configuratie op en herstart inverter
 
 ## Troubleshooting
 
-### Geen verbinding met meter
-- Controleer de IP en poort instellingen
-- Zorg dat de firewall de poort toestaat
-- Controleer de Modbus gateway configuratie
+### Geen verbinding tussen SolarEdge en Home Assistant
+```bash
+# Test Modbus verbinding vanaf SolarEdge netwerk
+telnet [Home Assistant IP] 5502
+```
 
-### Inverter ziet geen meter data
-- Controleer dat het Modbus adres overeenkomt tussen inverter en integratie
-- Zet log level op DEBUG om meer informatie te krijgen
-- Controleer de RS485 verbindingen
+### P1 entities niet gevonden
+Controleer of je P1 meter entities bestaan:
+1. Ga naar Developer Tools → States
+2. Zoek naar entities met `power`, `voltage`, `current`
+3. Noteer de exacte entity names (bijv. `sensor.power_consumed_tariff_1`)
 
-### Meter data komt niet binnen
-- Controleer de meter configuratie (IP, poort, Modbus adres)
-- Test de meter verbinding buiten Home Assistant
-- Controleer netwerk verbindingen
+### Logs controleren
+Ga naar Settings → System → Logs en zoek naar `solaredge_meterproxy`
 
-## Support
+## Voorbeeld P1 Entities
 
-Voor vragen en issues, gebruik de GitHub issue tracker: [Issues](https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy/issues)
+Typische P1 meter entities die je kunt gebruiken:
 
-## Credits
+```yaml
+# DSMR integratie
+sensor.power_consumption         # Totaal verbruik
+sensor.voltage_l1               # Spanning L1
+sensor.voltage_l2               # Spanning L2  
+sensor.voltage_l3               # Spanning L3
+sensor.current_l1               # Stroom L1
+sensor.current_l2               # Stroom L2
+sensor.current_l3               # Stroom L3
 
-Deze integratie is gebaseerd op het excellente werk van [nmakel/solaredge_meterproxy](https://github.com/nmakel/solaredge_meterproxy).
+# P1 Monitor integratie
+sensor.p1_monitor_power_consumption
+sensor.p1_monitor_voltage_l1
+# etc...
+```
+
+## Features
+
+✅ **Real-time P1 data**: Directe doorgifte van je slimme meter gegevens  
+✅ **WattNode compatibiliteit**: Emuleert een gecertificeerde WattNode meter  
+✅ **Automatische berekeningen**: Berekent ontbrekende waarden (stroom uit vermogen/spanning)  
+✅ **Home Assistant sensors**: Toont alle metergegevens in Home Assistant  
+✅ **HACS integratie**: Eenvoudige installatie en updates  
+
+## Ondersteuning
+
+- **GitHub Issues**: [Report bugs](https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy/issues)
+- **Discussions**: [Ask questions](https://github.com/AlbertHakvoort/hacs_solaredge_meterproxy/discussions)
+
+## Licentie
+
+MIT License - zie [LICENSE](LICENSE) file.

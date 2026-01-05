@@ -11,7 +11,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import DOMAIN
-from .coordinator import SolarEdgeMeterProxyCoordinator
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -22,18 +21,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up SolarEdge MeterProxy from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    coordinator = SolarEdgeMeterProxyCoordinator(hass, entry)
-    
-    try:
-        await coordinator.async_config_entry_first_refresh()
-    except Exception as ex:
-        raise ConfigEntryNotReady(f"Unable to connect: {ex}") from ex
-
     # Try to start the Modbus proxy server
     modbus_server = None
     try:
         from .modbus_server import ModbusProxyServer
-        modbus_server = ModbusProxyServer(hass, entry, coordinator)
+        modbus_server = ModbusProxyServer(hass, entry, None)  # No coordinator needed
         await modbus_server.async_start()
         _LOGGER.info("Modbus proxy server started successfully")
     except Exception as ex:
@@ -41,13 +33,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.info("Continuing without Modbus server - sensors will still work")
 
     hass.data[DOMAIN][entry.entry_id] = {
-        "coordinator": coordinator,
         "modbus_server": modbus_server,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        data = hass.data[DOMAIN].pop(entry.entry_id)
+        
+        # Stop the Modbus server if it was running
+        if data.get("modbus_server"):
+            try:
+                await data["modbus_server"].async_stop()
+                _LOGGER.info("Modbus proxy server stopped")
+            except Exception as ex:
+                _LOGGER.error("Error stopping Modbus server: %s", ex)
+
+    return unload_ok
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

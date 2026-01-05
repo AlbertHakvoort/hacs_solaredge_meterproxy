@@ -192,13 +192,96 @@ class ModbusProxyServer:
 
         self._slave_context.setValues(3, 1700, block_1701.to_registers())
 
+    def _get_p1_value(self, entity_id: str | None) -> float:
+        """Get value from P1 entity."""
+        if not entity_id:
+            return 0.0
+        
+        try:
+            state = self.hass.states.get(entity_id)
+            if state and state.state not in ["unknown", "unavailable"]:
+                return float(state.state)
+        except (ValueError, TypeError):
+            _LOGGER.warning(f"Could not convert {entity_id} state to float: {state.state if state else 'None'}")
+        
+        return 0.0
+
+    async def _get_p1_meter_data(self) -> dict[str, float]:
+        """Get current P1 meter data from configured entities."""
+        config = self.entry.data
+        
+        # Read P1 values
+        power_total = self._get_p1_value(config.get("p1_power_entity"))
+        voltage_l1 = self._get_p1_value(config.get("p1_voltage_l1_entity"))
+        voltage_l2 = self._get_p1_value(config.get("p1_voltage_l2_entity")) 
+        voltage_l3 = self._get_p1_value(config.get("p1_voltage_l3_entity"))
+        current_l1 = self._get_p1_value(config.get("p1_current_l1_entity"))
+        current_l2 = self._get_p1_value(config.get("p1_current_l2_entity"))
+        current_l3 = self._get_p1_value(config.get("p1_current_l3_entity"))
+        power_l1 = self._get_p1_value(config.get("p1_power_l1_entity"))
+        power_l2 = self._get_p1_value(config.get("p1_power_l2_entity"))
+        power_l3 = self._get_p1_value(config.get("p1_power_l3_entity"))
+        
+        # Calculate missing values if needed
+        if power_total == 0 and (power_l1 or power_l2 or power_l3):
+            power_total = power_l1 + power_l2 + power_l3
+            
+        # Estimate average voltage if some phases missing
+        voltages = [v for v in [voltage_l1, voltage_l2, voltage_l3] if v > 0]
+        avg_voltage = sum(voltages) / len(voltages) if voltages else 230.0
+        
+        if voltage_l1 == 0:
+            voltage_l1 = avg_voltage
+        if voltage_l2 == 0:
+            voltage_l2 = avg_voltage  
+        if voltage_l3 == 0:
+            voltage_l3 = avg_voltage
+            
+        # Calculate currents from power if missing
+        if current_l1 == 0 and power_l1 > 0 and voltage_l1 > 0:
+            current_l1 = power_l1 / voltage_l1
+        if current_l2 == 0 and power_l2 > 0 and voltage_l2 > 0:
+            current_l2 = power_l2 / voltage_l2
+        if current_l3 == 0 and power_l3 > 0 and voltage_l3 > 0:
+            current_l3 = power_l3 / voltage_l3
+            
+        return {
+            "power_active": power_total,
+            "l1_power_active": power_l1,
+            "l2_power_active": power_l2, 
+            "l3_power_active": power_l3,
+            "l1n_voltage": voltage_l1,
+            "l2n_voltage": voltage_l2,
+            "l3n_voltage": voltage_l3,
+            "voltage_ln": avg_voltage,
+            "voltage_ll": avg_voltage * 1.732,  # Line-line voltage
+            "l12_voltage": voltage_l1 * 1.732,
+            "l23_voltage": voltage_l2 * 1.732,
+            "l31_voltage": voltage_l3 * 1.732,
+            "l1_current": current_l1,
+            "l2_current": current_l2,
+            "l3_current": current_l3,
+            "frequency": 50.0,  # Standard EU frequency
+            "energy_active": 0.0,  # P1 doesn't provide energy totals easily
+            "import_energy_active": 0.0,
+            "l1_energy_active": 0.0,
+            "l2_energy_active": 0.0,
+            "l3_energy_active": 0.0,
+            "l1_import_energy_active": 0.0,
+            "l2_import_energy_active": 0.0,
+            "l3_import_energy_active": 0.0,
+        }
+
     async def _update_loop(self) -> None:
-        """Update meter data continuously."""
+        """Main update loop for the Modbus server."""
         while not self._stop_event.is_set():
             try:
-                if self.coordinator.data:
-                    await self._update_meter_values(self.coordinator.data)
-                await asyncio.sleep(1)  # Update every second
+                # Get P1 meter data directly from Home Assistant
+                p1_data = await self._get_p1_meter_data()
+                await self._update_meter_values(p1_data)
+                
+                refresh_rate = self.entry.data.get("refresh_rate", 5)
+                await asyncio.sleep(refresh_rate)
             except asyncio.CancelledError:
                 break
             except Exception as ex:
