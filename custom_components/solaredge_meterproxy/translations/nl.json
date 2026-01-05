@@ -1,0 +1,40 @@
+{
+  "config_flow": {
+    "step": {
+      "user": {
+        "title": "SolarEdge MeterProxy Setup",
+        "description": "Configureer de Modbus server instellingen",
+        "data": {
+          "server_ip": "Server IP Adres",
+          "server_port": "Server Poort",
+          "protocol": "Protocol",
+          "log_level": "Log Niveau"
+        }
+      },
+      "meter": {
+        "title": "Meter Configuratie",
+        "description": "Configureer je meter verbinding",
+        "data": {
+          "meter_type": "Meter Type",
+          "meter_host": "Meter IP Adres",
+          "meter_port": "Meter Poort",
+          "meter_address": "Meter Modbus Adres",
+          "meter_modbus_address": "Proxy Modbus Adres",
+          "refresh_rate": "Refresh Rate (seconden)",
+          "ct_current": "CT Stroom Rating",
+          "ct_inverted": "CT Richting Omgekeerd",
+          "phase_offset": "Fase Offset",
+          "serial_number": "Serienummer"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan niet verbinden met meter",
+      "invalid_host": "Ongeldig hostname of IP adres",
+      "unknown": "Onverwachte fout opgetreden"
+    },
+    "abort": {
+      "already_configured": "Apparaat is al geconfigureerd"
+    }
+  }
+}
