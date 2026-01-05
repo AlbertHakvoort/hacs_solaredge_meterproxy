@@ -101,7 +101,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     return {"title": f"SolarEdge MeterProxy ({data[CONF_METER_HOST]})"}
 
 
-class SolarEdgeMeterProxyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for SolarEdge MeterProxy."""
 
     VERSION = 1
