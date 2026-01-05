@@ -8,12 +8,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .const import (
-    CONF_METER_TYPE,
-    CONF_METER_HOST,
-    CONF_METER_PORT,
-    CONF_METER_ADDRESS,
-)
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,8 +94,8 @@ class SDM120MeterDevice(BaseMeterDevice):
                 _LOGGER.error("pymodbus is required for SDM120 meter support")
                 raise ConnectionError("pymodbus is not installed")
             
-            host = self.config[CONF_METER_HOST]
-            port = self.config[CONF_METER_PORT]
+            host = self.config["meter_host"]
+            port = self.config["meter_port"]
             
             self._client = ModbusTcpClient(host, port=port)
             connection = await self.hass.async_add_executor_job(self._client.connect)
@@ -125,7 +120,7 @@ class SDM120MeterDevice(BaseMeterDevice):
             await self.async_connect()
 
         try:
-            meter_address = self.config[CONF_METER_ADDRESS]
+            meter_address = self.config["meter_address"]
             
             # Read basic values from SDM120 registers
             # These are the standard SDM120 Modbus registers
@@ -189,7 +184,7 @@ class MeterDeviceFactory:
     @staticmethod
     async def create_device(hass: HomeAssistant, config: dict[str, Any]) -> BaseMeterDevice:
         """Create a meter device based on configuration."""
-        meter_type = config.get(CONF_METER_TYPE, "generic")
+        meter_type = config.get("meter_type", "generic")
         
         if meter_type == "sdm120":
             device = SDM120MeterDevice(hass, config)

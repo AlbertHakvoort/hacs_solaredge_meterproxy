@@ -2,39 +2,22 @@
   "config_flow": {
     "step": {
       "user": {
-        "title": "SolarEdge MeterProxy Setup",
-        "description": "Configure the Modbus server settings",
+        "title": "SolarEdge MeterProxy",
         "data": {
-          "server_ip": "Server IP Address",
-          "server_port": "Server Port",
+          "server_ip": "Server IP",
+          "server_port": "Server Port", 
           "protocol": "Protocol",
-          "log_level": "Log Level"
-        }
-      },
-      "meter": {
-        "title": "Meter Configuration",
-        "description": "Configure your meter connection",
-        "data": {
           "meter_type": "Meter Type",
-          "meter_host": "Meter IP Address",
+          "meter_host": "Meter IP",
           "meter_port": "Meter Port",
-          "meter_address": "Meter Modbus Address",
-          "meter_modbus_address": "Proxy Modbus Address",
-          "refresh_rate": "Refresh Rate (seconds)",
-          "ct_current": "CT Current Rating",
-          "ct_inverted": "CT Direction Inverted",
-          "phase_offset": "Phase Offset",
-          "serial_number": "Serial Number"
+          "meter_address": "Meter Address",
+          "meter_modbus_address": "Modbus Address",
+          "refresh_rate": "Refresh Rate"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to meter",
-      "invalid_host": "Invalid hostname or IP address",
-      "unknown": "Unexpected error occurred"
-    },
-    "abort": {
-      "already_configured": "Device is already configured"
+      "unknown": "Unknown error"
     }
   }
 }

@@ -27,7 +27,7 @@ class SolarEdgeMeterProxyCoordinator(DataUpdateCoordinator):
         self.entry = entry
         self.meter_device = None
         
-        refresh_rate = entry.data.get(CONF_REFRESH_RATE, DEFAULT_REFRESH_RATE)
+        refresh_rate = entry.data.get("refresh_rate", 5)
         
         super().__init__(
             hass,
