@@ -3,9 +3,9 @@
     "step": {
       "user": {
         "title": "SolarEdge MeterProxy - P1 Integration",
-        "description": "Configure virtual meter using your P1 smart meter data",
+        "description": "Configure virtual meter using your P1 smart meter data.\n\nServer IP: Use your Home Assistant IP ({local_ip})\nEntities found: {entity_count}",
         "data": {
-          "server_ip": "Modbus Server IP (for SolarEdge)",
+          "server_ip": "Home Assistant IP Address (SolarEdge connects here)",
           "server_port": "Modbus Server Port",
           "protocol": "Protocol",
           "p1_power_entity": "P1 Total Power Entity",
