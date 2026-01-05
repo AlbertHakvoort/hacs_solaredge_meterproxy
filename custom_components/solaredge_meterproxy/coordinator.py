@@ -15,7 +15,6 @@ from .const import (
     CONF_REFRESH_RATE,
     DEFAULT_REFRESH_RATE,
 )
-from .meter_devices import MeterDeviceFactory
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,6 +39,7 @@ class SolarEdgeMeterProxyCoordinator(DataUpdateCoordinator):
     async def _async_setup(self) -> None:
         """Set up the meter device."""
         try:
+            from .meter_devices import MeterDeviceFactory
             self.meter_device = await MeterDeviceFactory.create_device(
                 self.hass, self.entry.data
             )

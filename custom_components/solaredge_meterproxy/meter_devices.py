@@ -93,7 +93,11 @@ class SDM120MeterDevice(BaseMeterDevice):
     async def async_connect(self) -> None:
         """Connect to the SDM120 meter via Modbus."""
         try:
-            from pymodbus.client import ModbusTcpClient
+            try:
+                from pymodbus.client import ModbusTcpClient
+            except ImportError:
+                _LOGGER.error("pymodbus is required for SDM120 meter support")
+                raise ConnectionError("pymodbus is not installed")
             
             host = self.config[CONF_METER_HOST]
             port = self.config[CONF_METER_PORT]

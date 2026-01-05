@@ -12,7 +12,6 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import DOMAIN
 from .coordinator import SolarEdgeMeterProxyCoordinator
-from .modbus_server import ModbusProxyServer
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -30,9 +29,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as ex:
         raise ConfigEntryNotReady(f"Unable to connect: {ex}") from ex
 
-    # Start the Modbus proxy server
-    modbus_server = ModbusProxyServer(hass, entry, coordinator)
-    await modbus_server.async_start()
+    # Try to start the Modbus proxy server
+    modbus_server = None
+    try:
+        from .modbus_server import ModbusProxyServer
+        modbus_server = ModbusProxyServer(hass, entry, coordinator)
+        await modbus_server.async_start()
+        _LOGGER.info("Modbus proxy server started successfully")
+    except Exception as ex:
+        _LOGGER.warning("Failed to start Modbus server: %s", ex)
+        _LOGGER.info("Continuing without Modbus server - sensors will still work")
 
     hass.data[DOMAIN][entry.entry_id] = {
         "coordinator": coordinator,
@@ -47,9 +53,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        # Stop the Modbus server
-        modbus_server = hass.data[DOMAIN][entry.entry_id]["modbus_server"]
-        await modbus_server.async_stop()
+        # Stop the Modbus server if it exists
+        data = hass.data[DOMAIN][entry.entry_id]
+        modbus_server = data.get("modbus_server")
+        if modbus_server:
+            try:
+                await modbus_server.async_stop()
+            except Exception as ex:
+                _LOGGER.warning("Error stopping Modbus server: %s", ex)
         
         hass.data[DOMAIN].pop(entry.entry_id)
 
